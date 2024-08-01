@@ -27,7 +27,7 @@ void setup() {
   Serial.begin(9600);
 }
 
-void rotateStepper(float revs, int stepPin) {
+void rotateStepper(float revs, int stepPin, int dirPin) {
   digitalWrite(dirPin, revs < 0 ? LOW : HIGH);
 
   float absRevs = abs(revs);
@@ -56,13 +56,13 @@ void loop() {
 
   if (stopSignVisible) {
     Serial.println("Hiding stop sign and opening gate...");
-    rotateStepper(0.25, stepPin);
+    rotateStepper(0.25, stepPin, dirPin);
 
     stopSignVisible = false;
     gate = false;
   } else {
     Serial.println("Showing stop sign and closing gate...");
-    rotateStepper(-0.25, stepPin);
+    rotateStepper(-0.25, stepPin, dirPin);
 
     stopSignVisible = true;
     gate = true;

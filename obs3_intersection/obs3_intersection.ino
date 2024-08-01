@@ -1,109 +1,80 @@
-/*
-Interrupts from timer 1 are used to schedule and deliver the sensor
-trigger pulse.
-The duration of the sensor echo signal is measured by generating an
-external interrupt ervery time the echo signal changes state.
-*/
-#include <TimerOne.h> 
-#include <Stepper.h>
-//#include "HC_SR04.h"
+const int trigPinL = 2;
+const int echoPinL = 3;
+const int trigPinR = 4;
+const int echoPinR = 5;
 
-const int trigPin = 9;
-const int echoPin = 10;
+const int stepPinL = 8;
+const int dirPinL = 9;
+const int stepPinM = 10;
+const int dirPinM = 16;
+const int stepPinR = 6;
+const int dirPinR = 7;
 
 const int pulsesPerRev = 400;
-const int revs = 1;
-
 const float revsPerSec = 1.0;
-const float pulsesPerSec = pulsesPerRev * revsPerSec;
-
 const int pulseWidthMicros = 20;
+
+const float pulsesPerSec = pulsesPerRev * revsPerSec;
 const int pulseDelayMicros = (int) (1000000 / pulsesPerSec) - pulseWidthMicros;
 
-float duration, distance; //length of the sound wave and how far away the object is
-
-
-//HC_SR04 sensor(TRIG_PIN, ECHO_PIN, ECHO_INT);
-
-//gate = false;
-
-//stepper library initialization from pins 8 through 11
-//Stepper myStepper(stepsPerRevolution, 8, 9, 10, 11);
-// defines pins for stepper motor
-#define stepPin 10
-#define dirPin 16
-#define stepPin2 8
-#define dirPin2 9
-#define stepPin3 6
-#define dirPin3 7
- 
-//var for stop sign
-bool stopSignVisible = false;
-//Beam break sensor pin (for now)
-volatile bool sensorHigh = false; //ISR so it's volatile
-volatile bool gate = false; //current state of the gate
-bool motorStopped = false; //state of motor
+bool leftOpen = false;
 
 void setup() {
+  pinMode(trigPinL, OUTPUT);
+  pinMode(echoPinL, INPUT);
+  pinMode(trigPinL, OUTPUT);
+  pinMode(echoPinL, INPUT);
 
-  pinMode(trigPin, OUTPUT);  
-	pinMode(echoPin, INPUT);  
-  pinMode(dirPin, OUTPUT);
-  pinMode(stepPin, OUTPUT);
-  //speed of the motor
-  //Serial port in case we need to debug
+  pinMode(stepPinL, OUTPUT);
+  pinMode(dirPinL, OUTPUT);
+  pinMode(stepPinM, OUTPUT);
+  pinMode(dirPinM, OUTPUT);
+  pinMode(stepPinR, OUTPUT);
+  pinMode(dirPinR, OUTPUT);
+
   Serial.begin(9600);
 }
 
+void rotateStepper(float revs, int stepPin, int dirPin) {
+  digitalWrite(dirPin, revs < 0 ? LOW : HIGH);
+
+  float absRevs = abs(revs);
+
+  for (int x = 0; x < (int) (absRevs * pulsesPerRev); x++) {
+    digitalWrite(stepPin, HIGH); 
+    delayMicroseconds(pulseWidthMicros);
+    digitalWrite(stepPin, LOW); 
+    delayMicroseconds(pulseDelayMicros); 
+  }
+}
+
+float getDistance(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  float duration = pulseIn(echoPin, HIGH);
+  return (duration * 0.0343) / 2;
+}
+
 void loop() {
-  digitalWrite(trigPin, LOW);  
-	delayMicroseconds(2); //2 microseconds delay just to make sure that the pin in low first.
-	digitalWrite(trigPin, HIGH);  
-	delayMicroseconds(10); //10 microseconds delay, which sends out an 8 cycle sonic burst from the transmitter, which then bounces of an object and hits the receiver(Which is connected to the Echo Pin). 
-	digitalWrite(trigPin, LOW); 
+  float lDist = getDistance(trigPinL, echoPinL);
+  float rDist = getDistance(trigPinR, echoPinR);
 
-  //duration = pulseIn(echoPin, HIGH); //storing the time in the duration variable. (It returns the time in microseconds) 
-  //distance = (duration*.0343)/2; //Speed of sound is 343m/s or 0343 c/μS. Then, we multiply the duration by .0343 and then divide it by 2(Because the sound waves travel to the object AND back).
-  //Serial.print("Distance: "); //if needed to debug lol
-  //Serial.println(distance);
+  if (leftOpen) {
+    rotateStepper(0.5, stepPinM, dirPinM);
+    rotateStepper(-0.25, stepPinR, dirPinR);
+    rotateStepper(-0.25, stepPinL, dirPinL);
 
-  if (false) {
-    //if Interrupt is triggered, stop the motor
-    motorStopped = true; //motor stop flag
+    leftOpen = false;
+  } else {
+    rotateStepper(-0.5, stepPinM, dirPinM);
+    rotateStepper(0.25, stepPinR, dirPinR);
+    rotateStepper(0.25, stepPinL, dirPinL);
+
+    leftOpen = true;
   }
-  else {
-    motorStopped = false; //motor stop flag
-    if (stopSignVisible) {
-
-      Serial.println("Hiding stop sign and opening gate...");
-
-      //mechanism to rotate
-      digitalWrite(dirPin,HIGH); // Enables the motor to move in a particular direction
-      // Rotate 180 degs clockwise (Opening Gate)
-      for(int x = 0; x < revs * pulsesPerRev * 0.5; x++) { 
-        digitalWrite(stepPin,HIGH); 
-        delayMicroseconds(pulseWidthMicros);    // by changing this time delay between the steps we can change the rotation speed
-        digitalWrite(stepPin,LOW); 
-        delayMicroseconds(pulseDelayMicros); 
-        }
-      stopSignVisible = false;
-      gate = false;
-
-    } else {
-
-      //Show the stop sign and close the gate
-      Serial.println("Showing stop sign and closing gate...");
-      digitalWrite(dirPin,LOW); //Changes the rotations direction
-  // Rotate 180 degs anti-clockwise (Closing gate)
-      for(int x = 0; x < revs * pulsesPerRev * 0.5; x++) {
-        digitalWrite(stepPin,HIGH);
-        delayMicroseconds(pulseWidthMicros);
-        digitalWrite(stepPin,LOW);
-        delayMicroseconds(pulseDelayMicros);
-      }
-      stopSignVisible = true;
-      gate = true;
-    }
-    delay(10000); //change every 5-10 seconds. 10 for now
-  }
+  delay(10000); //change every 5-10 seconds. 10 for now
 }

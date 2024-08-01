@@ -1,6 +1,3 @@
-#include <Stepper.h>
-//#include "HC_SR04.h"
-
 const int trigPin = 9;
 const int echoPin = 10;
 const int stepPin = 10;
@@ -13,9 +10,7 @@ const int pulseWidthMicros = 20;
 const float pulsesPerSec = pulsesPerRev * revsPerSec;
 const int pulseDelayMicros = (int) (1000000 / pulsesPerSec) - pulseWidthMicros;
 
-float duration, distance;
 bool stopSignVisible = false;
-
 volatile bool gate = false; //current state of the gate
 
 void setup() {

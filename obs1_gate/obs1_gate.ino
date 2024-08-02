@@ -1,5 +1,5 @@
-const int trigPin = 9;
-const int echoPin = 10;
+// const int trigPin = 9;
+// const int echoPin = 10;
 const int stepPin = 10;
 const int dirPin = 16;
 
@@ -10,12 +10,11 @@ const int pulseWidthMicros = 20;
 const float pulsesPerSec = pulsesPerRev * revsPerSec;
 const int pulseDelayMicros = (int) (1000000 / pulsesPerSec) - pulseWidthMicros;
 
-bool stopSignVisible = false;
-volatile bool gate = false; //current state of the gate
+bool stopSignVisible = true;
 
 void setup() {
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
+  // pinMode(trigPin, OUTPUT);
+  // pinMode(echoPin, INPUT);
   pinMode(dirPin, OUTPUT);
   pinMode(stepPin, OUTPUT);
 
@@ -47,21 +46,16 @@ float getDistance(int trigPin, int echoPin) {
 }
 
 void loop() {
-  float dist = getDistance(trigPin, echoPin);
+  // float dist = getDistance(trigPin, echoPin);
 
   if (stopSignVisible) {
     Serial.println("Hiding stop sign and opening gate...");
-    rotateStepper(0.25, stepPin, dirPin);
-
-    stopSignVisible = false;
-    gate = false;
+    rotateStepper(-0.25, stepPin, dirPin);
   } else {
     Serial.println("Showing stop sign and closing gate...");
-    rotateStepper(-0.25, stepPin, dirPin);
-
-    stopSignVisible = true;
-    gate = true;
+    rotateStepper(0.25, stepPin, dirPin);
   }
 
-  delay(10000); // change every 5-10 seconds. 10 for now
+  stopSignVisible = !stopSignVisible;
+  delay(10000);
 }

@@ -17,7 +17,7 @@ const int pulseWidthMicros = 20;
 const float pulsesPerSec = pulsesPerRev * revsPerSec;
 const int pulseDelayMicros = (int) (1000000 / pulsesPerSec) - pulseWidthMicros;
 
-bool leftOpen = false;
+bool rightOpen = false;
 
 void setup() {
   pinMode(trigPinL, OUTPUT);
@@ -63,18 +63,16 @@ void loop() {
   float lDist = getDistance(trigPinL, echoPinL);
   float rDist = getDistance(trigPinR, echoPinR);
 
-  if (leftOpen) {
+  if (rightOpen) {
     rotateStepper(0.5, stepPinM, dirPinM);
     rotateStepper(-0.25, stepPinR, dirPinR);
     rotateStepper(-0.25, stepPinL, dirPinL);
-
-    leftOpen = false;
   } else {
     rotateStepper(-0.5, stepPinM, dirPinM);
     rotateStepper(0.25, stepPinR, dirPinR);
     rotateStepper(0.25, stepPinL, dirPinL);
-
-    leftOpen = true;
   }
-  delay(10000); //change every 5-10 seconds. 10 for now
+
+  rightOpen = !rightOpen;
+  delay(10000);
 }

@@ -1,5 +1,7 @@
 /*********************************************************************
  * Elevator controller — sends RUN / STOP status to pixel display
+ * documentation for elevator
+ * https://docs.google.com/document/d/1uaOxLuAqR3IrmTgVmGz793UeVHF_5mAhqmWCSldknbs/edit?tab=t.0
  * Code on the Arduino Uno
  *  • HIGH  on pin 12  = STOP  (pixel board draws red frame)
  *  • LOW   on pin 12  = GO    (pixel board draws green frame)

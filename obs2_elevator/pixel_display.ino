@@ -1,5 +1,7 @@
 // This code is for the 64 x 32 pixel display that shows go or stop
 // run on the arduino mega
+//elevator documentation
+//https://docs.google.com/document/d/1uaOxLuAqR3IrmTgVmGz793UeVHF_5mAhqmWCSldknbs/edit?tab=t.0
 #include "RGBmatrixPanel.h"
 #include <string.h>
 #include <stdlib.h>
